@@ -3,11 +3,17 @@ import { HassEntity } from "home-assistant-js-websocket";
 import { CSSResultGroup, LitElement, css, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators";
 import { repeat } from "lit/directives/repeat";
+import memoizeOne from "memoize-one";
 import type { SortableEvent } from "sortablejs";
 import { fireEvent } from "../../../../common/dom/fire_event";
 import { stopPropagation } from "../../../../common/dom/stop_propagation";
+import { LocalizeFunc } from "../../../../common/translations/localize";
 import "../../../../components/entity/ha-entity-picker";
 import "../../../../components/ha-button";
+import {
+  HaFormSchema,
+  SchemaUnion,
+} from "../../../../components/ha-form/types";
 import "../../../../components/ha-icon-button";
 import "../../../../components/ha-list-item";
 import "../../../../components/ha-svg-icon";
@@ -29,8 +35,8 @@ import { supportsCoverPositionCardFeature } from "../../card-features/hui-cover-
 import { supportsCoverTiltCardFeature } from "../../card-features/hui-cover-tilt-card-feature";
 import { supportsCoverTiltPositionCardFeature } from "../../card-features/hui-cover-tilt-position-card-feature";
 import { supportsFanSpeedCardFeature } from "../../card-features/hui-fan-speed-card-feature";
-import { supportsHumidifierToggleCardFeature } from "../../card-features/hui-humidifier-toggle-card-feature";
 import { supportsHumidifierModesCardFeature } from "../../card-features/hui-humidifier-modes-card-feature";
+import { supportsHumidifierToggleCardFeature } from "../../card-features/hui-humidifier-toggle-card-feature";
 import { supportsLawnMowerCommandCardFeature } from "../../card-features/hui-lawn-mower-commands-card-feature";
 import { supportsLightBrightnessCardFeature } from "../../card-features/hui-light-brightness-card-feature";
 import { supportsLightColorTempCardFeature } from "../../card-features/hui-light-color-temp-card-feature";
@@ -41,7 +47,9 @@ import { supportsTargetTemperatureCardFeature } from "../../card-features/hui-ta
 import { supportsVacuumCommandsCardFeature } from "../../card-features/hui-vacuum-commands-card-feature";
 import { supportsWaterHeaterOperationModesCardFeature } from "../../card-features/hui-water-heater-operation-modes-card-feature";
 import { LovelaceCardFeatureConfig } from "../../card-features/types";
+import { LovelaceCardFeatureLayout } from "../../cards/types";
 import { getCardFeatureElementClass } from "../../create-element/create-card-feature-element";
+import { capitalizeFirstLetter } from "../../../../common/string/capitalize-first-letter";
 
 export type FeatureType = LovelaceCardFeatureConfig["type"];
 type SupportsFeature = (stateObj: HassEntity) => boolean;
@@ -121,6 +129,9 @@ declare global {
     "features-changed": {
       features: LovelaceCardFeatureConfig[];
     };
+    "layout-changed": {
+      layout: LovelaceCardFeatureLayout;
+    };
   }
 }
 
@@ -132,6 +143,9 @@ export class HuiCardFeaturesEditor extends LitElement {
 
   @property({ attribute: false })
   public features?: LovelaceCardFeatureConfig[];
+
+  @property({ attribute: false })
+  public layout?: LovelaceCardFeatureLayout;
 
   @property({ attribute: false })
   public featuresTypes?: FeatureType[];
@@ -147,6 +161,37 @@ export class HuiCardFeaturesEditor extends LitElement {
     super.disconnectedCallback();
     this._destroySortable();
   }
+
+  private _optionsSchema = memoizeOne(
+    (_localize: LocalizeFunc) =>
+      [
+        {
+          name: "type",
+          selector: {
+            select: {
+              mode: "dropdown",
+              options: ["vertical", "horizontal", "compact"].map((layout) => ({
+                label: capitalizeFirstLetter(layout),
+                value: layout,
+              })),
+            },
+          },
+        },
+      ] as const satisfies readonly HaFormSchema[]
+  );
+
+  private _computeLabelCallback = (
+    schema: SchemaUnion<ReturnType<typeof this._optionsSchema>>
+  ) => {
+    switch (schema.name) {
+      case "type":
+        return "Layout";
+      default:
+        return this.hass!.localize(
+          `ui.panel.lovelace.editor.card.generic.${schema.name}`
+        );
+    }
+  };
 
   private _supportsFeatureType(type: string): boolean {
     if (!this.stateObj) return false;
@@ -225,6 +270,14 @@ export class HuiCardFeaturesEditor extends LitElement {
       isCustomType(type)
     );
 
+    const schema = this._optionsSchema(this.hass.localize);
+
+    const data = { ...this.layout };
+
+    if (!data.type) {
+      data.type = "vertical";
+    }
+
     return html`
       <ha-expansion-panel outlined>
         <h3 slot="header">
@@ -239,6 +292,17 @@ export class HuiCardFeaturesEditor extends LitElement {
                     "ui.panel.lovelace.editor.features.no_compatible_available"
                   )}
                 </ha-alert>
+              `
+            : nothing}
+          ${supportedFeaturesType.length > 0
+            ? html`
+                <ha-form
+                  .hass=${this.hass}
+                  .data=${data}
+                  .schema=${schema}
+                  .computeLabel=${this._computeLabelCallback}
+                  @value-changed=${this._layoutChanged}
+                ></ha-form>
               `
             : nothing}
           <div class="features">
@@ -401,11 +465,17 @@ export class HuiCardFeaturesEditor extends LitElement {
 
   private _removeFeature(ev: CustomEvent): void {
     const index = (ev.currentTarget as any).index;
-    const newfeatures = this.features!.concat();
+    const newFeatures = this.features!.concat();
 
-    newfeatures.splice(index, 1);
+    newFeatures.splice(index, 1);
 
-    fireEvent(this, "features-changed", { features: newfeatures });
+    fireEvent(this, "features-changed", { features: newFeatures });
+  }
+
+  private _layoutChanged(ev: CustomEvent): void {
+    ev.stopPropagation();
+    const layout = ev.detail.value;
+    fireEvent(this, "layout-changed", { layout });
   }
 
   private _editFeature(ev: CustomEvent): void {

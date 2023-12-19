@@ -208,7 +208,6 @@ class HuiClimatePresetModesCardFeature
         --control-select-button-border-radius: 10px;
       }
       .container {
-        padding: 0 12px 12px 12px;
         width: auto;
       }
     `;
