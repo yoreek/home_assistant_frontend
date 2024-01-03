@@ -87,30 +87,38 @@ class HaDurationInput extends LitElement {
 
   private _durationChanged(ev: CustomEvent<{ value: TimeChangedEvent }>) {
     ev.stopPropagation();
-    const value = { ...ev.detail.value };
+    const eventValue = { ...ev.detail.value };
 
-    if (!this.enableMillisecond && !value.milliseconds) {
+    if (!this.enableMillisecond && !eventValue.milliseconds) {
       // @ts-ignore
-      delete value.milliseconds;
-    } else if (value.milliseconds > 999) {
-      value.seconds += Math.floor(value.milliseconds / 1000);
-      value.milliseconds %= 1000;
+      delete eventValue.milliseconds;
+    } else if (eventValue.milliseconds > 999) {
+      eventValue.seconds += Math.floor(eventValue.milliseconds / 1000);
+      eventValue.milliseconds %= 1000;
     }
 
-    if (value.seconds > 59) {
-      value.minutes += Math.floor(value.seconds / 60);
-      value.seconds %= 60;
+    if (eventValue.seconds > 59) {
+      eventValue.minutes += Math.floor(eventValue.seconds / 60);
+      eventValue.seconds %= 60;
     }
 
-    if (value.minutes > 59) {
-      value.hours += Math.floor(value.minutes / 60);
-      value.minutes %= 60;
+    if (eventValue.minutes > 59) {
+      eventValue.hours += Math.floor(eventValue.minutes / 60);
+      eventValue.minutes %= 60;
     }
 
-    if (this.enableDay && value.hours > 24) {
-      value.days = (value.days ?? 0) + Math.floor(value.hours / 24);
-      value.hours %= 24;
+    if (this.enableDay && eventValue.hours > 24) {
+      eventValue.days =
+        (eventValue.days ?? 0) + Math.floor(eventValue.hours / 24);
+      eventValue.hours %= 24;
     }
+
+    const days = this.enableDay ? `${eventValue.days} days, ` : "";
+    const value = `${days}${eventValue.hours.toString().padStart(2, "0")}:${
+      eventValue.minutes ? eventValue.minutes.toString().padStart(2, "0") : "00"
+    }:${
+      eventValue.seconds ? eventValue.seconds.toString().padStart(2, "0") : "00"
+    }`;
 
     fireEvent(this, "value-changed", {
       value,

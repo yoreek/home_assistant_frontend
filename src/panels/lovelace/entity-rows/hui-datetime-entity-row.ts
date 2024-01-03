@@ -79,6 +79,7 @@ class HuiInputDatetimeEntityRow extends LitElement implements LovelaceRow {
             .value=${time}
             .disabled=${unavailable}
             .locale=${this.hass.locale}
+            .enableSecond=${stateObj.attributes.enable_second}
             @value-changed=${this._timeChanged}
             @click=${this._stopEventPropagation}
           ></ha-time-input>
