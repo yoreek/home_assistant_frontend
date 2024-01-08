@@ -1,7 +1,7 @@
 import { html, LitElement, nothing, PropertyValues, TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators";
 import "../../../components/ha-date-input";
-import { isUnavailableState, UNAVAILABLE } from "../../../data/entity";
+import { UNAVAILABLE } from "../../../data/entity";
 import { setDurationValue } from "../../../data/duration";
 import type { HomeAssistant } from "../../../types";
 import { hasConfigOrEntityChanged } from "../common/has-changed";
@@ -9,6 +9,7 @@ import "../components/hui-generic-entity-row";
 import { createEntityNotFoundWarning } from "../components/hui-warning";
 import type { EntityConfig, LovelaceRow } from "./types";
 import "../../../components/ha-duration-input";
+import { createDurationData } from "../../../common/datetime/create_duration_data";
 
 @customElement("hui-duration-entity-row")
 class HuiDurationEntityRow extends LitElement implements LovelaceRow {
@@ -47,9 +48,7 @@ class HuiDurationEntityRow extends LitElement implements LovelaceRow {
     return html`
       <hui-generic-entity-row .hass=${this.hass} .config=${this._config}>
         <ha-duration-input
-          .value=${isUnavailableState(stateObj.state)
-            ? undefined
-            : stateObj.state}
+          .data=${createDurationData(stateObj.state)}
           .locale=${this.hass.locale}
           .disabled=${unavailable}
           .enableDay=${stateObj.attributes.enable_day}
