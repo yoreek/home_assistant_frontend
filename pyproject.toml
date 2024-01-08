@@ -3,8 +3,8 @@ requires = ["setuptools~=68.0", "wheel~=0.40.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name         = "home-assistant-frontend"
-version      = "20240906.0"
+name         = "yoreek-home-assistant-frontend"
+version      = "20240908.0"
 license      = {text = "Apache-2.0"}
 description  = "The Home Assistant frontend"
 readme       = "README.md"
