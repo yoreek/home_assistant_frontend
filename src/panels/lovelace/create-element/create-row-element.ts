@@ -30,6 +30,7 @@ const LAZY_LOAD_TYPES = {
   "cover-entity": () => import("../entity-rows/hui-cover-entity-row"),
   "date-entity": () => import("../entity-rows/hui-date-entity-row"),
   "datetime-entity": () => import("../entity-rows/hui-datetime-entity-row"),
+  "duration-entity": () => import("../entity-rows/hui-duration-entity-row"),
   "event-entity": () => import("../entity-rows/hui-event-entity-row"),
   "group-entity": () => import("../entity-rows/hui-group-entity-row"),
   "input-button-entity": () =>
@@ -69,6 +70,7 @@ const DOMAIN_TO_ELEMENT_TYPE = {
   cover: "cover",
   date: "date",
   datetime: "datetime",
+  duration: "duration",
   event: "event",
   fan: "toggle",
   group: "group",

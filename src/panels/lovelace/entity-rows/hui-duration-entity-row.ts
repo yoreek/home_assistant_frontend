@@ -1,17 +1,18 @@
 import { html, LitElement, nothing, PropertyValues, TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators";
 import "../../../components/ha-date-input";
-import { isUnavailableState, UNAVAILABLE } from "../../../data/entity";
-import { setTimeValue } from "../../../data/time";
+import { UNAVAILABLE } from "../../../data/entity";
+import { setDurationValue } from "../../../data/duration";
 import type { HomeAssistant } from "../../../types";
 import { hasConfigOrEntityChanged } from "../common/has-changed";
 import "../components/hui-generic-entity-row";
 import { createEntityNotFoundWarning } from "../components/hui-warning";
 import type { EntityConfig, LovelaceRow } from "./types";
-import "../../../components/ha-time-input";
+import "../../../components/ha-duration-input";
+import { createDurationData } from "../../../common/datetime/create_duration_data";
 
-@customElement("hui-time-entity-row")
-class HuiTimeEntityRow extends LitElement implements LovelaceRow {
+@customElement("hui-duration-entity-row")
+class HuiDurationEntityRow extends LitElement implements LovelaceRow {
   @property({ attribute: false }) public hass?: HomeAssistant;
 
   @state() private _config?: EntityConfig;
@@ -46,16 +47,15 @@ class HuiTimeEntityRow extends LitElement implements LovelaceRow {
 
     return html`
       <hui-generic-entity-row .hass=${this.hass} .config=${this._config}>
-        <ha-time-input
-          .value=${isUnavailableState(stateObj.state)
-            ? undefined
-            : stateObj.state}
+        <ha-duration-input
+          .data=${createDurationData(stateObj.state)}
           .locale=${this.hass.locale}
           .disabled=${unavailable}
-          .enableSecond=${stateObj.attributes.enable_second}
-          @value-changed=${this._timeChanged}
+          .enableDay=${stateObj.attributes.enable_day}
+          .enableMillisecond=${stateObj.attributes.enable_millisecond}
+          @value-changed=${this._durationChanged}
           @click=${this._stopEventPropagation}
-        ></ha-time-input>
+        ></ha-duration-input>
       </hui-generic-entity-row>
     `;
   }
@@ -64,16 +64,16 @@ class HuiTimeEntityRow extends LitElement implements LovelaceRow {
     ev.stopPropagation();
   }
 
-  private _timeChanged(ev: CustomEvent<{ value: string }>): void {
+  private _durationChanged(ev: CustomEvent<{ value: string }>): void {
     if (ev.detail.value) {
       const stateObj = this.hass!.states[this._config!.entity];
-      setTimeValue(this.hass!, stateObj.entity_id, ev.detail.value);
+      setDurationValue(this.hass!, stateObj.entity_id, ev.detail.value);
     }
   }
 }
 
 declare global {
   interface HTMLElementTagNameMap {
-    "hui-time-entity-row": HuiTimeEntityRow;
+    "hui-duration-entity-row": HuiDurationEntityRow;
   }
 }
