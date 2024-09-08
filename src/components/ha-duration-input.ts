@@ -145,8 +145,15 @@ class HaDurationInput extends LitElement {
       }
     }
 
+    const days = this.enableDay ? `${value.days} days, ` : "";
+    const newValue = `${days}${value.hours.toString().padStart(2, "0")}:${
+      value.minutes ? value.minutes.toString().padStart(2, "0") : "00"
+    }:${
+      value.seconds ? value.seconds.toString().padStart(2, "0") : "00"
+    }`;
+
     fireEvent(this, "value-changed", {
-      value,
+      value: newValue,
     });
   }
 }
